@@ -9,6 +9,8 @@ import { createDb, Database, migrateToLatest } from './db'
 import { FirehoseSubscription } from './subscription'
 import { AppContext, Config } from './config'
 import wellKnown from './well-known'
+import { trainingData } from './algos/digital-agora/training'
+import { PostClassifier } from './classifier'
 
 export class FeedGenerator {
   public app: express.Application
@@ -32,7 +34,12 @@ export class FeedGenerator {
   static create(cfg: Config) {
     const app = express()
     const db = createDb(cfg.sqliteLocation)
-    const firehose = new FirehoseSubscription(db, cfg.subscriptionEndpoint)
+    const classifier = new PostClassifier(trainingData)
+    const firehose = new FirehoseSubscription(
+      db,
+      cfg.subscriptionEndpoint,
+      classifier,
+    )
 
     const didCache = new MemoryCache()
     const didResolver = new DidResolver({
